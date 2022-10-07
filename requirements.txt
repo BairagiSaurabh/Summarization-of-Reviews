@@ -1,0 +1,17 @@
+numpy
+pandas
+python-dateutil
+pytz
+six
+streamlit
+matplotlib
+wordcloud
+sklearn
+pillow
+plotly
+bs4
+requests
+regex
+nltk
+spacy
+vaderSentiment
