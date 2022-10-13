@@ -11,7 +11,7 @@ better purchase decision.
 
 ## Demo Link:
 
-https://bairagisaurabh-summarization-of-reviews-extract-data-6o51n9.streamlitapp.com/
+https://bairagisaurabh-summarization-of-reviews-extract-data-6o51n9.streamlitapp.com/ 
 
 
 
