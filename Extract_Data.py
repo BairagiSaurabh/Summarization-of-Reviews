@@ -619,4 +619,24 @@ try:
 
 except TypeError:
     st.spinner(text= "Waiting to get the link...")
+
+hide_streamlit_style = """
+            <style>
+            #MainMenu {
+            visibility: hidden;
+            }
+            footer{
+            visibility: visible;
+            }
+            footer:after{
+            content: 'Creator : Saurabh Bairagi';
+            display:block;
+            postion:relative;
+            color:white;
+            padding:0px;
+            top:3px
+            }
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
     
