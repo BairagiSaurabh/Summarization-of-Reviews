@@ -9,7 +9,9 @@ This model can save a lot of customers time by summarizing the whole bunch of
 reviews and displaying them in form of plots so that the customer can make
 better purchase decision.
 
+## Demo Link:
 
+https://bairagisaurabh-summarization-of-reviews-extract-data-6o51n9.streamlitapp.com/
 
 
 
