@@ -13,9 +13,9 @@ better purchase decision.
 
 https://bairagisaurabh-summarization-of-reviews-extract-data-n54e62.streamlitapp.com/ 
 
+## Blog Link:
 
-
-
+https://saurabh-bairagi.medium.com/summarizing-product-reviews-into-dashboard-ff7ead416228
 
 ## Demo
 
