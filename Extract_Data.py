@@ -530,7 +530,7 @@ def main_file(webpage, page_number, pages_to_extract):
 
         data["Year"] = pd.DatetimeIndex(data['Date']).year  # extracting year from date
         data["Month"] = pd.DatetimeIndex(data['Date']).month  # extracting month from date
-        data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
+        #data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
 
         dfinal_ = data.reset_index().drop(["index"], axis=1)  # resetting the index
         return dfinal_
