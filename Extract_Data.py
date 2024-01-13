@@ -27,47 +27,47 @@ def main_file(webpage, page_number, pages_to_extract):
     #global dfinal
     def amazon_data(webpage, page_number, pages_to_extract):
     
-    webpage = webpage[:-1]
-    amazon_review = []
-    amazon_date = []
-    amazon_summary = []
-
-    def scrape_data_amazon(webpage, page_number, pages_to_extract):
-        headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-
-        webpage = webpage + '&page='
-        next_page = webpage + str(page_number)
-        response= requests.get(str(next_page),headers=headers) # Send a HTTP request to the URL and save response from server in response object 
-        print(response)
-        soup = BeautifulSoup(response.content,"html.parser")
-        #print(soup)
-        soup_review = soup.findAll("div",{"class":"t-ZTKy"})
-        #soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
-        soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class')==['_2sc7ZR']) # 10 reviews
-        #print(soup_review)
-        for x in range(len(soup_review)):
-            amazon_review.append(soup_review[x].text.replace('READ MORE','').strip())
-            amazon_date.append(soup_date[x].text.strip())
-            #amazon_summary.append(soup_summary[x].text.strip())
-
-   #Generating the next page url
-        if page_number < pages_to_extract:
-            page_number = page_number + 1
-            #print(page_number)
-            scrape_data_amazon(webpage, page_number,pages_to_extract)
-            
-    scrape_data_amazon(webpage, page_number, pages_to_extract)
-    data_amazon = {'Date':amazon_date, 'Review': amazon_review}
-    df_amazon = pd.DataFrame(data_amazon, columns = ['Date','Review'])
+        webpage = webpage[:-1]
+        amazon_review = []
+        amazon_date = []
+        amazon_summary = []
     
-    def get_date_amazon(text):
-        return ' '.join(text.split()[-3:])
+        def scrape_data_amazon(webpage, page_number, pages_to_extract):
+            headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
     
-    df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
-    df_amazon.dropna(inplace = True)
+            webpage = webpage + '&page='
+            next_page = webpage + str(page_number)
+            response= requests.get(str(next_page),headers=headers) # Send a HTTP request to the URL and save response from server in response object 
+            print(response)
+            soup = BeautifulSoup(response.content,"html.parser")
+            #print(soup)
+            soup_review = soup.findAll("div",{"class":"t-ZTKy"})
+            #soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
+            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class')==['_2sc7ZR']) # 10 reviews
+            #print(soup_review)
+            for x in range(len(soup_review)):
+                amazon_review.append(soup_review[x].text.replace('READ MORE','').strip())
+                amazon_date.append(soup_date[x].text.strip())
+                #amazon_summary.append(soup_summary[x].text.strip())
     
-    return df_amazon
+       #Generating the next page url
+            if page_number < pages_to_extract:
+                page_number = page_number + 1
+                #print(page_number)
+                scrape_data_amazon(webpage, page_number,pages_to_extract)
+                
+        scrape_data_amazon(webpage, page_number, pages_to_extract)
+        data_amazon = {'Date':amazon_date, 'Review': amazon_review}
+        df_amazon = pd.DataFrame(data_amazon, columns = ['Date','Review'])
+        
+        def get_date_amazon(text):
+            return ' '.join(text.split()[-3:])
+        
+        df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
+        df_amazon.dropna(inplace = True)
+        
+        return df_amazon
 
 
 
