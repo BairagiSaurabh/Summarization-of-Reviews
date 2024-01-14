@@ -23,55 +23,66 @@ showWarningOnDirectExecution = False
 
 #dfinal = 0
 
+
+
+### 1. Extract Data
+
+# dfinal = 0
+
 def main_file(webpage, page_number, pages_to_extract):
-    #global dfinal
+    # global dfinal
     def amazon_data(webpage, page_number, pages_to_extract):
-    
+        """
+        Given a URL,page number and number of pages to extract; this function extracts review, date, summary
+        and creates a dataframe
+
+        """
+
         webpage = webpage[:-1]
         amazon_review = []
         amazon_date = []
         amazon_summary = []
-    
+
         def scrape_data_amazon(webpage, page_number, pages_to_extract):
             headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+
             webpage = webpage + '&page='
             next_page = webpage + str(page_number)
-            response= requests.get(str(next_page),headers=headers) # Send a HTTP request to the URL and save response from server in response object 
-            print(response)
-            soup = BeautifulSoup(response.content,"html.parser")
-            #print(soup)
-            soup_review = soup.findAll("div",{"class":"t-ZTKy"})
-            #soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
-            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class')==['_2sc7ZR']) # 10 reviews
-            #print(soup_review)
+            response = requests.get(str(next_page),
+                                    headers=headers)  # Send a HTTP request to the URL and save response from server in response object
+            # print(response)
+            soup = BeautifulSoup(response.content, "html.parser")
+            # print(soup)
+            soup_review = soup.findAll("div", {"class": "t-ZTKy"})
+            # soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
+            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class') == ['_2sc7ZR'])  # 10 reviews
+            # print(soup_review)
             for x in range(len(soup_review)):
-                amazon_review.append(soup_review[x].text.replace('READ MORE','').strip())
+                amazon_review.append(soup_review[x].text.replace('READ MORE', '').strip())
                 amazon_date.append(soup_date[x].text.strip())
-                #amazon_summary.append(soup_summary[x].text.strip())
-    
-       #Generating the next page url
+                # amazon_summary.append(soup_summary[x].text.strip())
+
+            # Generating the next page url
             if page_number < pages_to_extract:
                 page_number = page_number + 1
-                #print(page_number)
-                scrape_data_amazon(webpage, page_number,pages_to_extract)
-                
+                # print(page_number)
+                scrape_data_amazon(webpage, page_number, pages_to_extract)
+
         scrape_data_amazon(webpage, page_number, pages_to_extract)
-        data_amazon = {'Date':amazon_date, 'Review': amazon_review}
-        df_amazon = pd.DataFrame(data_amazon, columns = ['Date','Review'])
-        
+        data_amazon = {'Date': amazon_date, 'Review': amazon_review}
+        df_amazon = pd.DataFrame(data_amazon, columns=['Date', 'Review'])
+
         def get_date_amazon(text):
             return ' '.join(text.split()[-3:])
-        
+
         df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
-        df_amazon.dropna(inplace = True)
-        
+        df_amazon.dropna(inplace=True)
+
         return df_amazon
 
-
-    #final_df = 0
-    df = amazon_data(str(url),int(page),int(extract))
+    # final_df = 0
+    df = amazon_data(str(url), int(page), int(extract))
 
     ### 2. Split Reviews
 
@@ -117,7 +128,6 @@ def main_file(webpage, page_number, pages_to_extract):
     all_stopwords.remove('nor')
     all_stopwords.remove('same')
     all_stopwords.remove('some')
-
 
     def clean_aspect_spacy(reviews):
         """
@@ -437,7 +447,6 @@ def main_file(webpage, page_number, pages_to_extract):
         dic = {"aspect_pairs": aspects}
         return dic
 
-
     def extract_aspects(reviews, nlp):
         """
         Applying the aspect extraction function and returning a dictionary
@@ -451,10 +460,10 @@ def main_file(webpage, page_number, pages_to_extract):
 
     nlp = spacy.load("en_core_web_sm")
     reviews_train = df1[["Review"]]
-    aspect_list_train = extract_aspects(reviews_train,nlp)
+    aspect_list_train = extract_aspects(reviews_train, nlp)
     aspect_list_train = list(aspect_list_train)
 
-### 7. Add aspects to dataframe
+    ### 7. Add aspects to dataframe
 
     def add_data(data, aspect_list):
         """
@@ -496,9 +505,9 @@ def main_file(webpage, page_number, pages_to_extract):
             {"Date": dates_, "Review": rev_, "Aspect": aspects_, "Description": description_, "Raw_Review": raw_r})
         return data_
 
-    df2 = add_data(df1,aspect_list_train)
+    df2 = add_data(df1, aspect_list_train)
 
-### 8. Sentiments
+    ### 8. Sentiments
 
     def sentiment_scores(sentence):
         senti = SentimentIntensityAnalyzer()
@@ -514,8 +523,8 @@ def main_file(webpage, page_number, pages_to_extract):
             return ("Neutral"), sentiment_dict['neu'], sentiment_dict[
                 'compound']  # if compound score is in between 0.05 and -0.05 then the review is neutral
 
-### 9. Final frame:
-    #global final_df
+    ### 9. Final frame:
+    # global final_df
     def date_df(data):
         sentiment_ = []  # this list carries the sentiment for the review
         compound = []  # this consists of score based on which the sentiments are defined
@@ -532,12 +541,12 @@ def main_file(webpage, page_number, pages_to_extract):
 
         data["Year"] = pd.DatetimeIndex(data['Date']).year  # extracting year from date
         data["Month"] = pd.DatetimeIndex(data['Date']).month  # extracting month from date
-        #data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
 
         dfinal_ = data.reset_index().drop(["index"], axis=1)  # resetting the index
         return dfinal_
 
     return date_df(df2)
+
 
 url = st.text_input("Paste the URL here")
 page = st.text_input("Enter the page number")
@@ -548,89 +557,97 @@ try:
         st.session_state.dfinal = 0
 
     if st.button("Get Summary"):
-        dfinal = main_file(str(url),int(page),int(extract))
+        dfinal = main_file(str(url), int(page), int(extract))
         st.session_state.dfinal = dfinal
-        #st.dataframe(st.session_state.dfinal)
+        # st.dataframe(st.session_state.dfinal)
 
     ### 10. Aspect:
     top = st.session_state.dfinal["Aspect"].value_counts()[1:15]
     asp = list(dict(top).keys())
 
+
     def streamlit_menu():
         with st.sidebar:
             selected = option_menu(
                 menu_title="Aspects",  # required
-                options= asp,  # required
+                options=asp,  # required
                 menu_icon="cast",  # optional
                 default_index=0,  # optional
             )
         return selected
+
 
     select = streamlit_menu()
 
     asp_bar = []
     asp_score = []
     for k in asp:
-        a1 = st.session_state.dfinal.groupby(by = "Aspect")
+        a1 = st.session_state.dfinal.groupby(by="Aspect")
         a2 = a1.get_group(k)
         a3 = a2["Score"].mean()
         asp_bar.append(k)
         asp_score.append(a3)
 
-    df_bar = pd.DataFrame({"Aspect" : asp_bar, "Score" : asp_score})
-    fig = px.bar(df_bar, x = "Score",y = "Aspect",title = "Sentiments for Aspects",color="Score",orientation = 'h')
+    df_bar = pd.DataFrame({"Aspect": asp_bar, "Score": asp_score})
+    fig = px.bar(df_bar, x="Score", y="Aspect", title="Sentiments for Aspects", color="Score", orientation='h')
     st.plotly_chart(fig)
     st.success("More score 👉🏻 Positive Review 😄")
     st.success("Less score 👉🏻 Negative Review 😡")
 
-    def show_senti(data_,senti):
+
+    def show_senti(data_, senti):
         data_show = data_[data_["Sentiment"] == str(senti)]
         data_show_imp = data_show[["Raw_Review", "Sentiment"]]
         data_display = data_show_imp.drop_duplicates(subset=["Raw_Review"])
         data_display_ = data_display.reset_index().drop(["index"], axis=1)
         return data_display_.head(15)
 
-    def pie_plot(data_,select):
+
+    def pie_plot(data_, select):
         data_pos = data_[data_["Sentiment"] == "Positive"]
         data_neg = data_[data_["Sentiment"] == "Negative"]
         data_neu = data_[data_["Sentiment"] == "Neutral"]
-        count = [round((data_pos.shape[0]*100)/data_.shape[0]),round((data_neg.shape[0]*100)/data_.shape[0]),
-                 round((data_neu.shape[0]*100)/data_.shape[0])]
+        count = [round((data_pos.shape[0] * 100) / data_.shape[0]), round((data_neg.shape[0] * 100) / data_.shape[0]),
+                 round((data_neu.shape[0] * 100) / data_.shape[0])]
         labels_ = ["Positive", "Negative", "Neutral"]
-        fig = go.Figure(go.Pie(labels=labels_,values=count,hoverinfo="label+percent",textinfo="value",
-                               title = "Pie chart for {}".format(select)))
+        fig = go.Figure(go.Pie(labels=labels_, values=count, hoverinfo="label+percent", textinfo="value",
+                               title="Pie chart for {}".format(select)))
         st.plotly_chart(fig)
 
-    def line_plot(data,select):
-        fig = px.line(data, x="Date", y="Score",title=("Sentiment for {} across timeline".format(select)))
+
+    def line_plot(data, select):
+        fig = px.line(data, x="Date", y="Score", title=("Sentiment for {} across timeline".format(select)))
         fig.update_traces(line_color="purple")
         st.plotly_chart(fig)
 
-    def worcloud_plot(data,select):
+
+    def worcloud_plot(data, select):
         wc_data = dict(data["Description"].value_counts())
         wc = WordCloud().fit_words(wc_data)
-        st.image(wc.to_array(), use_column_width=True,caption = "Wordcloud for {}".format(select))
+        st.image(wc.to_array(), use_column_width=True, caption="Wordcloud for {}".format(select))
 
-    def show_aspects(data,aspect_name):
+
+    def show_aspects(data, aspect_name):
         if select == aspect_name:
             aspects = [x for x, value in enumerate(data["Review"].values) if str(select) in value]
             data_ = data.iloc[aspects]
 
             if st.button("Positive Reviews"):
-                st.table(show_senti(data_,'Positive'))
+                st.table(show_senti(data_, 'Positive'))
 
             if st.button("Negative Reviews"):
                 st.table(show_senti(data_, 'Negative'))
 
             pie_plot(data_, select)
-            line_plot(data_,select)
-            worcloud_plot(data_,select)
+            line_plot(data_, select)
+            worcloud_plot(data_, select)
+
 
     for x in asp:
-        show_aspects(st.session_state.dfinal,x)
+        show_aspects(st.session_state.dfinal, x)
 
 except TypeError:
-    st.spinner(text= "Waiting to get the link...")
+    st.spinner(text="Waiting to get the link...")
 
 hide_streamlit_style = """
             <style>
