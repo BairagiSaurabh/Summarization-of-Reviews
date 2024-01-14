@@ -687,3 +687,5 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# streamlit run main_file.py --client.showErrorDetails=false
