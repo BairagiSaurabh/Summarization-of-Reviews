@@ -82,12 +82,15 @@ def main_file(webpage, page_number, pages_to_extract):
         df_amazon = pd.DataFrame(data_amazon, columns=['Date', 'Review'])
 
         def get_date_amazon(text):
-            if 'months ago' in text.lower():
+            if 'months ago' in text.lower() or 'month ago' in text.lower():
                 number = int(re.search(r'\d+', text).group())
                 current_date = datetime.now()
                 months_ago = current_date - relativedelta(months=number)
                 formatted_result = months_ago.strftime('%B, %Y')
                 return formatted_result
+
+            elif 'days ago' in text.lower() or 'day ago' in text.lower():
+                return datetime.now().strftime('%B, %Y')
 
             else:
                 return text
