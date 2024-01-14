@@ -13,9 +13,14 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import warnings
 
+warnings.filterwarnings("ignore")
 st.set_page_config(page_title='Product Summarization')
 st.title('Product Review Summarisation')
+st.set_option('deprecation.showfileUploaderEncoding', False)
 
 showWarningOnDirectExecution = False
 
@@ -47,7 +52,10 @@ def main_file(webpage, page_number, pages_to_extract):
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
 
-            webpage = webpage + '&page='
+            if '&page=' in webpage:
+                webpage = webpage
+            else:
+                webpage = webpage + '&page='
             next_page = webpage + str(page_number)
             response = requests.get(str(next_page),
                                     headers=headers)  # Send a HTTP request to the URL and save response from server in response object
@@ -74,7 +82,15 @@ def main_file(webpage, page_number, pages_to_extract):
         df_amazon = pd.DataFrame(data_amazon, columns=['Date', 'Review'])
 
         def get_date_amazon(text):
-            return ' '.join(text.split()[-3:])
+            if 'months ago' in text.lower():
+                number = int(re.search(r'\d+', text).group())
+                current_date = datetime.now()
+                months_ago = current_date - relativedelta(months=number)
+                formatted_result = months_ago.strftime('%B, %Y')
+                return formatted_result
+
+            else:
+                return text
 
         df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
         df_amazon.dropna(inplace=True)
