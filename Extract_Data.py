@@ -24,53 +24,51 @@ showWarningOnDirectExecution = False
 #dfinal = 0
 
 def main_file(webpage, page_number, pages_to_extract):
-    try:
-        #global dfinal
-        def amazon_data(webpage, page_number, pages_to_extract):
+    #global dfinal
+    def amazon_data(webpage, page_number, pages_to_extract):
+    
+        webpage = webpage[:-1]
+        amazon_review = []
+        amazon_date = []
+        amazon_summary = []
+    
+        def scrape_data_amazon(webpage, page_number, pages_to_extract):
+            headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    
+            webpage = webpage + '&page='
+            next_page = webpage + str(page_number)
+            response= requests.get(str(next_page),headers=headers) # Send a HTTP request to the URL and save response from server in response object 
+            print(response)
+            soup = BeautifulSoup(response.content,"html.parser")
+            #print(soup)
+            soup_review = soup.findAll("div",{"class":"t-ZTKy"})
+            #soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
+            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class')==['_2sc7ZR']) # 10 reviews
+            #print(soup_review)
+            for x in range(len(soup_review)):
+                amazon_review.append(soup_review[x].text.replace('READ MORE','').strip())
+                amazon_date.append(soup_date[x].text.strip())
+                #amazon_summary.append(soup_summary[x].text.strip())
+    
+       #Generating the next page url
+            if page_number < pages_to_extract:
+                page_number = page_number + 1
+                #print(page_number)
+                scrape_data_amazon(webpage, page_number,pages_to_extract)
+                
+        scrape_data_amazon(webpage, page_number, pages_to_extract)
+        data_amazon = {'Date':amazon_date, 'Review': amazon_review}
+        df_amazon = pd.DataFrame(data_amazon, columns = ['Date','Review'])
         
-            webpage = webpage[:-1]
-            amazon_review = []
-            amazon_date = []
-            amazon_summary = []
+        def get_date_amazon(text):
+            return ' '.join(text.split()[-3:])
         
-            def scrape_data_amazon(webpage, page_number, pages_to_extract):
-                headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
+        df_amazon.dropna(inplace = True)
         
-                webpage = webpage + '&page='
-                next_page = webpage + str(page_number)
-                response= requests.get(str(next_page),headers=headers) # Send a HTTP request to the URL and save response from server in response object 
-                print(response)
-                soup = BeautifulSoup(response.content,"html.parser")
-                #print(soup)
-                soup_review = soup.findAll("div",{"class":"t-ZTKy"})
-                #soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
-                soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class')==['_2sc7ZR']) # 10 reviews
-                #print(soup_review)
-                for x in range(len(soup_review)):
-                    amazon_review.append(soup_review[x].text.replace('READ MORE','').strip())
-                    amazon_date.append(soup_date[x].text.strip())
-                    #amazon_summary.append(soup_summary[x].text.strip())
-        
-           #Generating the next page url
-                if page_number < pages_to_extract:
-                    page_number = page_number + 1
-                    #print(page_number)
-                    scrape_data_amazon(webpage, page_number,pages_to_extract)
-                    
-            scrape_data_amazon(webpage, page_number, pages_to_extract)
-            data_amazon = {'Date':amazon_date, 'Review': amazon_review}
-            df_amazon = pd.DataFrame(data_amazon, columns = ['Date','Review'])
-            
-            def get_date_amazon(text):
-                return ' '.join(text.split()[-3:])
-            
-            df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
-            df_amazon.dropna(inplace = True)
-            print("scrapped df shape:{}".format(df_amazon.shape))
-            return df_amazon
-    except Exception as e:
-        st.error(f"An error occurred in 'main_file' function: {str(e)}")   
+        return df_amazon
+
 
     #final_df = 0
     df = amazon_data(str(url),int(page),int(extract))
@@ -82,15 +80,11 @@ def main_file(webpage, page_number, pages_to_extract):
         This function splits the review into multiple sentences based on the following conjunctions
 
         """
-        try:
-            delimiters = ".", "but", "and", "also"
-            regex_pattern = '|'.join(map(re.escape, delimiters))  # applying the above delimiters
-            splitted = re.split(regex_pattern, text)  # splitting the review
-            return splitted  # this returns a list of multiple reviews
-        except Exception as e:
-            st.error(f"An error occurred in 'split_review' function: {str(e)}")   
+        delimiters = ".", "but", "and", "also"
+        regex_pattern = '|'.join(map(re.escape, delimiters))  # applying the above delimiters
+        splitted = re.split(regex_pattern, text)  # splitting the review
+        return splitted  # this returns a list of multiple reviews
 
-    
     @st.cache(suppress_st_warning=True)
     def downloads():
         nltk.download('stopwords')
@@ -131,22 +125,19 @@ def main_file(webpage, page_number, pages_to_extract):
         We expand the contractions and replace some words by an empty string
 
         """
-        try:
-            statement = reviews.lower().strip()
-            statement = statement.replace("won't", "will not").replace("cannot", "can not").replace("can't", "can not") \
-                .replace("n't", " not").replace("what's", "what is").replace("it's", "it is") \
-                .replace("'ve", " have").replace("i'm", "i am").replace("'re", " are") \
-                .replace("he's", "he is").replace("she's", "she is").replace("*****", " ") \
-                .replace("%", " percent ").replace("₹", " rupee ").replace("$", " dollar ") \
-                .replace("€", " euro ").replace("'ll", " will").replace("doesn't", "does not")
-    
-            statement = re.sub('[^a-zA-Z]', ' ', statement)  # replacing whatever isn't letters by an empty string
-            statement = statement.split()  # forming list of words in a given review
-            final_statement = [lemma.lemmatize(word) for word in statement if not word in set(all_stopwords)]
-            final_statement_ = ' '.join(final_statement)  # joining the words and forming the review again without stopwords
-            return final_statement_
-        except Exception as e:
-            st.error(f"An error occurred in 'clean_aspect_spacy' function: {str(e)}")
+        statement = reviews.lower().strip()
+        statement = statement.replace("won't", "will not").replace("cannot", "can not").replace("can't", "can not") \
+            .replace("n't", " not").replace("what's", "what is").replace("it's", "it is") \
+            .replace("'ve", " have").replace("i'm", "i am").replace("'re", " are") \
+            .replace("he's", "he is").replace("she's", "she is").replace("*****", " ") \
+            .replace("%", " percent ").replace("₹", " rupee ").replace("$", " dollar ") \
+            .replace("€", " euro ").replace("'ll", " will").replace("doesn't", "does not")
+
+        statement = re.sub('[^a-zA-Z]', ' ', statement)  # replacing whatever isn't letters by an empty string
+        statement = statement.split()  # forming list of words in a given review
+        final_statement = [lemma.lemmatize(word) for word in statement if not word in set(all_stopwords)]
+        final_statement_ = ' '.join(final_statement)  # joining the words and forming the review again without stopwords
+        return final_statement_
 
     ### 5. Form Dataframe again
     def get_splitted_reviews(df):
@@ -154,28 +145,25 @@ def main_file(webpage, page_number, pages_to_extract):
         This function applies the above defined splitting function and forms a dataframe again
 
         """
-        try:
-            reviews = []  # this will contain our reviews
-            dates = []  # this will contain our dates
-            raw_reviews = []
-    
-            for i, j in enumerate(df["Review"].values):  # for each review
-                review_split = split_review(j)  # apply the splitting the function
-                review_split_ = [x for x in review_split if
-                                 len(x.split()) >= 3]  # review containing less than 3 words are removed
-                duplicate_dates = [str(df["Date"].values[i]) for h in
-                                   range(len(review_split_))]  # repeat the dates for splitted reviews
-                raws = [x for x in review_split if len(x.split()) >= 3]
-                reviews.extend(review_split_)  # add reviews to list
-                dates.extend(duplicate_dates)  # add dates to list
-                raw_reviews.extend(raws)
-    
-            reviews_ = [clean_aspect_spacy(text) for text in reviews]  # applying the cleaning function
-    
-            data = pd.DataFrame({"Date": dates, "Review": reviews_, "Raw_Review": raw_reviews})  # create new dataframe
-            return data
-        except Exception as e:
-            st.error(f"An error occurred in 'get_splitted_reviews' function: {str(e)}")
+        reviews = []  # this will contain our reviews
+        dates = []  # this will contain our dates
+        raw_reviews = []
+
+        for i, j in enumerate(df["Review"].values):  # for each review
+            review_split = split_review(j)  # apply the splitting the function
+            review_split_ = [x for x in review_split if
+                             len(x.split()) >= 3]  # review containing less than 3 words are removed
+            duplicate_dates = [str(df["Date"].values[i]) for h in
+                               range(len(review_split_))]  # repeat the dates for splitted reviews
+            raws = [x for x in review_split if len(x.split()) >= 3]
+            reviews.extend(review_split_)  # add reviews to list
+            dates.extend(duplicate_dates)  # add dates to list
+            raw_reviews.extend(raws)
+
+        reviews_ = [clean_aspect_spacy(text) for text in reviews]  # applying the cleaning function
+
+        data = pd.DataFrame({"Date": dates, "Review": reviews_, "Raw_Review": raw_reviews})  # create new dataframe
+        return data
 
     df1 = get_splitted_reviews(df)
 
@@ -186,270 +174,268 @@ def main_file(webpage, page_number, pages_to_extract):
         applying 7 different rules of pos tagging
 
         """
-        try:
-            prod_pronouns = ['it', 'this', 'they', 'these']
-            review_body = row['Review']
-            doc = nlp(review_body)
-    
-            rule1_pairs = []
-            rule2_pairs = []
-            rule3_pairs = []
-            rule4_pairs = []
-            rule5_pairs = []
-            rule6_pairs = []
-            rule7_pairs = []
-    
-            for token in doc:
-                A = "999999"
-                M = "999999"
-                if token.dep_ == "amod" and not token.is_stop:
-                    M = token.text
-                    A = token.head.text
-    
-                    # add adverbial modifier of adjective (e.g. 'most comfortable headphones')
-                    M_children = token.children
+
+        prod_pronouns = ['it', 'this', 'they', 'these']
+        review_body = row['Review']
+        doc = nlp(review_body)
+
+        rule1_pairs = []
+        rule2_pairs = []
+        rule3_pairs = []
+        rule4_pairs = []
+        rule5_pairs = []
+        rule6_pairs = []
+        rule7_pairs = []
+
+        for token in doc:
+            A = "999999"
+            M = "999999"
+            if token.dep_ == "amod" and not token.is_stop:
+                M = token.text
+                A = token.head.text
+
+                # add adverbial modifier of adjective (e.g. 'most comfortable headphones')
+                M_children = token.children
+                for child_m in M_children:
+                    if (child_m.dep_ == "advmod"):
+                        M_hash = child_m.text
+                        M = M_hash + " " + M
+                        break
+
+                # negation in adjective, the "no" keyword is a 'det' of the noun (e.g. no interesting characters)
+                A_children = token.head.children
+                for child_a in A_children:
+                    if (child_a.dep_ == "det" and child_a.text == 'no'):
+                        neg_prefix = 'not'
+                        M = neg_prefix + " " + M
+                        break
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict1 = {"noun": A, "adj": M, "rule": 1}
+                rule1_pairs.append(dict1)
+
+            # print("--- SPACY : Rule 1 Done ---")
+
+            # -----------------------------------------------------------------------------------------------------------------------------
+            # # SECOND RULE OF DEPENDANCY PARSE -
+            # # M - Sentiment modifier || A - Aspect
+            # Direct Object - A is a child of something with relationship of nsubj, while
+            # M is a child of the same something with relationship of dobj
+            # Assumption - A verb will have only one NSUBJ and DOBJ
+            children = token.children
+            A = "999999"
+            M = "999999"
+            add_neg_pfx = False
+            for child in children:
+                if (child.dep_ == "nsubj" and not child.is_stop):
+                    A = child.text
+                    # check_spelling(child.text)
+
+                if ((child.dep_ == "dobj" and child.pos_ == "ADJ") and not child.is_stop):
+                    M = child.text
+                    # check_spelling(child.text)
+
+                if (child.dep_ == "neg"):
+                    neg_prefix = child.text
+                    add_neg_pfx = True
+
+            if (add_neg_pfx and M != "999999"):
+                M = neg_prefix + " " + M
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict2 = {"noun": A, "adj": M, "rule": 2}
+                rule2_pairs.append(dict2)
+
+            # print("--- SPACY : Rule 2 Done ---")
+            # -----------------------------------------------------------------------------------------------------------------------------
+
+            ## THIRD RULE OF DEPENDANCY PARSE -
+            ## M - Sentiment modifier || A - Aspect
+            ## Adjectival Complement - A is a child of something with relationship of nsubj, while
+            ## M is a child of the same something with relationship of acomp
+            ## Assumption - A verb will have only one NSUBJ and DOBJ
+            ## "The sound of the speakers would be better. The sound of the speakers could be better" - handled using AUX dependency
+
+            children = token.children
+            A = "999999"
+            M = "999999"
+            add_neg_pfx = False
+            for child in children:
+                if (child.dep_ == "nsubj" and not child.is_stop):
+                    A = child.text
+                    # check_spelling(child.text)
+
+                if (child.dep_ == "acomp" and not child.is_stop):
+                    M = child.text
+
+                # example - 'this could have been better' -> (this, not better)
+                if (child.dep_ == "aux" and child.tag_ == "MD"):
+                    neg_prefix = "not"
+                    add_neg_pfx = True
+
+                if (child.dep_ == "neg"):
+                    neg_prefix = child.text
+                    add_neg_pfx = True
+
+            if (add_neg_pfx and M != "999999"):
+                M = neg_prefix + " " + M
+                # check_spelling(child.text)
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict3 = {"noun": A, "adj": M, "rule": 3}
+                rule3_pairs.append(dict3)
+                # rule3_pairs.append((A, M, sid.polarity_scores(M)['compound'],3))
+            # print("--- SPACY : Rule 3 Done ---")
+            # ------------------------------------------------------------------------------------------------------------------------------
+
+            ## FOURTH RULE OF DEPENDANCY PARSE -
+            ## M - Sentiment modifier || A - Aspect
+
+            # Adverbial modifier to a passive verb - A is a child of something with relationship of nsubjpass, while
+            # M is a child of the same something with relationship of advmod
+
+            # Assumption - A verb will have only one NSUBJ and DOBJ
+
+            children = token.children
+            A = "999999"
+            M = "999999"
+            add_neg_pfx = False
+            for child in children:
+                if ((child.dep_ == "nsubjpass" or child.dep_ == "nsubj") and not child.is_stop):
+                    A = child.text
+                    # check_spelling(child.text)
+
+                if (child.dep_ == "advmod" and not child.is_stop):
+                    M = child.text
+                    M_children = child.children
                     for child_m in M_children:
                         if (child_m.dep_ == "advmod"):
                             M_hash = child_m.text
-                            M = M_hash + " " + M
+                            M = M_hash + " " + child.text
                             break
-    
-                    # negation in adjective, the "no" keyword is a 'det' of the noun (e.g. no interesting characters)
-                    A_children = token.head.children
-                    for child_a in A_children:
-                        if (child_a.dep_ == "det" and child_a.text == 'no'):
-                            neg_prefix = 'not'
-                            M = neg_prefix + " " + M
-                            break
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict1 = {"noun": A, "adj": M, "rule": 1}
-                    rule1_pairs.append(dict1)
-    
-                # print("--- SPACY : Rule 1 Done ---")
-    
-                # -----------------------------------------------------------------------------------------------------------------------------
-                # # SECOND RULE OF DEPENDANCY PARSE -
-                # # M - Sentiment modifier || A - Aspect
-                # Direct Object - A is a child of something with relationship of nsubj, while
-                # M is a child of the same something with relationship of dobj
-                # Assumption - A verb will have only one NSUBJ and DOBJ
-                children = token.children
-                A = "999999"
-                M = "999999"
-                add_neg_pfx = False
-                for child in children:
-                    if (child.dep_ == "nsubj" and not child.is_stop):
-                        A = child.text
-                        # check_spelling(child.text)
-    
-                    if ((child.dep_ == "dobj" and child.pos_ == "ADJ") and not child.is_stop):
-                        M = child.text
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "neg"):
-                        neg_prefix = child.text
-                        add_neg_pfx = True
-    
-                if (add_neg_pfx and M != "999999"):
-                    M = neg_prefix + " " + M
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict2 = {"noun": A, "adj": M, "rule": 2}
-                    rule2_pairs.append(dict2)
-    
-                # print("--- SPACY : Rule 2 Done ---")
-                # -----------------------------------------------------------------------------------------------------------------------------
-    
-                ## THIRD RULE OF DEPENDANCY PARSE -
-                ## M - Sentiment modifier || A - Aspect
-                ## Adjectival Complement - A is a child of something with relationship of nsubj, while
-                ## M is a child of the same something with relationship of acomp
-                ## Assumption - A verb will have only one NSUBJ and DOBJ
-                ## "The sound of the speakers would be better. The sound of the speakers could be better" - handled using AUX dependency
-    
-                children = token.children
-                A = "999999"
-                M = "999999"
-                add_neg_pfx = False
-                for child in children:
-                    if (child.dep_ == "nsubj" and not child.is_stop):
-                        A = child.text
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "acomp" and not child.is_stop):
-                        M = child.text
-    
-                    # example - 'this could have been better' -> (this, not better)
-                    if (child.dep_ == "aux" and child.tag_ == "MD"):
-                        neg_prefix = "not"
-                        add_neg_pfx = True
-    
-                    if (child.dep_ == "neg"):
-                        neg_prefix = child.text
-                        add_neg_pfx = True
-    
-                if (add_neg_pfx and M != "999999"):
-                    M = neg_prefix + " " + M
                     # check_spelling(child.text)
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict3 = {"noun": A, "adj": M, "rule": 3}
-                    rule3_pairs.append(dict3)
-                    # rule3_pairs.append((A, M, sid.polarity_scores(M)['compound'],3))
-                # print("--- SPACY : Rule 3 Done ---")
-                # ------------------------------------------------------------------------------------------------------------------------------
-    
-                ## FOURTH RULE OF DEPENDANCY PARSE -
-                ## M - Sentiment modifier || A - Aspect
-    
-                # Adverbial modifier to a passive verb - A is a child of something with relationship of nsubjpass, while
-                # M is a child of the same something with relationship of advmod
-    
-                # Assumption - A verb will have only one NSUBJ and DOBJ
-    
-                children = token.children
-                A = "999999"
-                M = "999999"
-                add_neg_pfx = False
-                for child in children:
-                    if ((child.dep_ == "nsubjpass" or child.dep_ == "nsubj") and not child.is_stop):
-                        A = child.text
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "advmod" and not child.is_stop):
-                        M = child.text
-                        M_children = child.children
-                        for child_m in M_children:
-                            if (child_m.dep_ == "advmod"):
-                                M_hash = child_m.text
-                                M = M_hash + " " + child.text
-                                break
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "neg"):
-                        neg_prefix = child.text
-                        add_neg_pfx = True
-    
-                if (add_neg_pfx and M != "999999"):
-                    M = neg_prefix + " " + M
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict4 = {"noun": A, "adj": M, "rule": 4}
-                    rule4_pairs.append(dict4)
-                    # rule4_pairs.append((A, M,sid.polarity_scores(M)['compound'],4)) # )
-    
-                # print("--- SPACY : Rule 4 Done ---")
-                # ------------------------------------------------------------------------------------------------------------------------------
-    
-                ## FIFTH RULE OF DEPENDANCY PARSE -
-                ## M - Sentiment modifier || A - Aspect
-    
-                # Complement of a copular verb - A is a child of M with relationship of nsubj, while
-                # M has a child with relationship of cop
-    
-                # Assumption - A verb will have only one NSUBJ and DOBJ
-    
-                children = token.children
-                A = "999999"
-                buf_var = "999999"
-                for child in children:
-                    if (child.dep_ == "nsubj" and not child.is_stop):
-                        A = child.text
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "cop" and not child.is_stop):
-                        buf_var = child.text
-                        # check_spelling(child.text)
-    
-                if (A != "999999" and buf_var != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict5 = {"noun": A, "adj": token.text, "rule": 5}
-                    rule5_pairs.append(dict5)
-                    # rule5_pairs.append((A, token.text,sid.polarity_scores(token.text)['compound'],5))
-    
-                # print("--- SPACY : Rule 5 Done ---")
-                # ------------------------------------------------------------------------------------------------------------------------------
-    
-                ## SIXTH RULE OF DEPENDANCY PARSE -
-                ## M - Sentiment modifier || A - Aspect
-                ## Example - "It ok", "ok" is INTJ (interjections like bravo, great etc)
-    
-                children = token.children
-                A = "999999"
-                M = "999999"
-                if (token.pos_ == "INTJ" and not token.is_stop):
-                    for child in children:
-                        if (child.dep_ == "nsubj" and not child.is_stop):
-                            A = child.text
-                            M = token.text
-                            # check_spelling(child.text)
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict6 = {"noun": A, "adj": M, "rule": 6}
-                    rule6_pairs.append(dict6)
-    
-                    # rule6_pairs.append((A, M,sid.polarity_scores(M)['compound'],6))
-    
-                # print("--- SPACY : Rule 6 Done ---")
-    
-                # ------------------------------------------------------------------------------------------------------------------------------
-    
-                ## SEVENTH RULE OF DEPENDANCY PARSE -
-                ## M - Sentiment modifier || A - Aspect
-                ## ATTR - link between a verb like 'be/seem/appear' and its complement
-                ## Example: 'this is garbage' -> (this, garbage)
-    
-                children = token.children
-                A = "999999"
-                M = "999999"
-                add_neg_pfx = False
-                for child in children:
-                    if (child.dep_ == "nsubj" and not child.is_stop):
-                        A = child.text
-                        # check_spelling(child.text)
-    
-                    if ((child.dep_ == "attr") and not child.is_stop):
-                        M = child.text
-                        # check_spelling(child.text)
-    
-                    if (child.dep_ == "neg"):
-                        neg_prefix = child.text
-                        add_neg_pfx = True
-    
-                if (add_neg_pfx and M != "999999"):
-                    M = neg_prefix + " " + M
-    
-                if (A != "999999" and M != "999999"):
-                    if A in prod_pronouns:
-                        A = "product"
-                    dict7 = {"noun": A, "adj": M, "rule": 7}
-                    rule7_pairs.append(dict7)
-                    # rule7_pairs.append((A, M,sid.polarity_scores(M)['compound'],7))
-    
-            # print("--- SPACY : All Rules Done ---")
-    
+
+                if (child.dep_ == "neg"):
+                    neg_prefix = child.text
+                    add_neg_pfx = True
+
+            if (add_neg_pfx and M != "999999"):
+                M = neg_prefix + " " + M
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict4 = {"noun": A, "adj": M, "rule": 4}
+                rule4_pairs.append(dict4)
+                # rule4_pairs.append((A, M,sid.polarity_scores(M)['compound'],4)) # )
+
+            # print("--- SPACY : Rule 4 Done ---")
             # ------------------------------------------------------------------------------------------------------------------------------
-    
-            aspects = []
-    
-            aspects = rule1_pairs + rule2_pairs + rule3_pairs + rule4_pairs + rule5_pairs + rule6_pairs + rule7_pairs
-    
-            dic = {"aspect_pairs": aspects}
-            return dic
-        except Exception as e:
-            st.error(f"An error occurred in 'apply_extraction' function: {str(e)}")
+
+            ## FIFTH RULE OF DEPENDANCY PARSE -
+            ## M - Sentiment modifier || A - Aspect
+
+            # Complement of a copular verb - A is a child of M with relationship of nsubj, while
+            # M has a child with relationship of cop
+
+            # Assumption - A verb will have only one NSUBJ and DOBJ
+
+            children = token.children
+            A = "999999"
+            buf_var = "999999"
+            for child in children:
+                if (child.dep_ == "nsubj" and not child.is_stop):
+                    A = child.text
+                    # check_spelling(child.text)
+
+                if (child.dep_ == "cop" and not child.is_stop):
+                    buf_var = child.text
+                    # check_spelling(child.text)
+
+            if (A != "999999" and buf_var != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict5 = {"noun": A, "adj": token.text, "rule": 5}
+                rule5_pairs.append(dict5)
+                # rule5_pairs.append((A, token.text,sid.polarity_scores(token.text)['compound'],5))
+
+            # print("--- SPACY : Rule 5 Done ---")
+            # ------------------------------------------------------------------------------------------------------------------------------
+
+            ## SIXTH RULE OF DEPENDANCY PARSE -
+            ## M - Sentiment modifier || A - Aspect
+            ## Example - "It ok", "ok" is INTJ (interjections like bravo, great etc)
+
+            children = token.children
+            A = "999999"
+            M = "999999"
+            if (token.pos_ == "INTJ" and not token.is_stop):
+                for child in children:
+                    if (child.dep_ == "nsubj" and not child.is_stop):
+                        A = child.text
+                        M = token.text
+                        # check_spelling(child.text)
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict6 = {"noun": A, "adj": M, "rule": 6}
+                rule6_pairs.append(dict6)
+
+                # rule6_pairs.append((A, M,sid.polarity_scores(M)['compound'],6))
+
+            # print("--- SPACY : Rule 6 Done ---")
+
+            # ------------------------------------------------------------------------------------------------------------------------------
+
+            ## SEVENTH RULE OF DEPENDANCY PARSE -
+            ## M - Sentiment modifier || A - Aspect
+            ## ATTR - link between a verb like 'be/seem/appear' and its complement
+            ## Example: 'this is garbage' -> (this, garbage)
+
+            children = token.children
+            A = "999999"
+            M = "999999"
+            add_neg_pfx = False
+            for child in children:
+                if (child.dep_ == "nsubj" and not child.is_stop):
+                    A = child.text
+                    # check_spelling(child.text)
+
+                if ((child.dep_ == "attr") and not child.is_stop):
+                    M = child.text
+                    # check_spelling(child.text)
+
+                if (child.dep_ == "neg"):
+                    neg_prefix = child.text
+                    add_neg_pfx = True
+
+            if (add_neg_pfx and M != "999999"):
+                M = neg_prefix + " " + M
+
+            if (A != "999999" and M != "999999"):
+                if A in prod_pronouns:
+                    A = "product"
+                dict7 = {"noun": A, "adj": M, "rule": 7}
+                rule7_pairs.append(dict7)
+                # rule7_pairs.append((A, M,sid.polarity_scores(M)['compound'],7))
+
+        # print("--- SPACY : All Rules Done ---")
+
+        # ------------------------------------------------------------------------------------------------------------------------------
+
+        aspects = []
+
+        aspects = rule1_pairs + rule2_pairs + rule3_pairs + rule4_pairs + rule5_pairs + rule6_pairs + rule7_pairs
+
+        dic = {"aspect_pairs": aspects}
+        return dic
 
 
     def extract_aspects(reviews, nlp):
@@ -458,13 +444,10 @@ def main_file(webpage, page_number, pages_to_extract):
         with key = Aspect & value = Description
 
         """
-        try:
-            print("Entering Apply function!")
-            aspect_list = reviews.apply(lambda row: apply_extraction(row, nlp),
-                                        axis=1)  # going through all the rows in the dataframe
-            return aspect_list
-        except Exception as e:
-            st.error(f"An error occurred in 'extract_aspects' function: {str(e)}")
+        print("Entering Apply function!")
+        aspect_list = reviews.apply(lambda row: apply_extraction(row, nlp),
+                                    axis=1)  # going through all the rows in the dataframe
+        return aspect_list
 
     nlp = spacy.load("en_core_web_sm")
     reviews_train = df1[["Review"]]
@@ -479,90 +462,80 @@ def main_file(webpage, page_number, pages_to_extract):
         then the reviews are repeated such that each row consists of single aspect and description
 
         """
-        try:
-            rev_ = []  # list containing reviews
-            dates_ = []  # list containing dates
-            aspects_ = []  # list containing aspects
-            description_ = []  # list containing description
-            raw_r = []
-    
-            for i, j in enumerate(aspect_list):
-                length = len(list(j.values())[0])
-                if len(list(j.values())[0]) != 0:
-                    rev_a = [data["Review"].values[i] for k in range(len(list(j.values())[0]))]
-                    dates_a = [data["Date"].values[i] for k in range(len(list(j.values())[0]))]
-                    raw_r_a = [data["Raw_Review"].values[i] for k in range(len(list(j.values())[0]))]
-                    aspects_a = [list(j.values())[0][h]["noun"] for h in range(length)]
-                    descrip_a = [list(j.values())[0][h]["adj"] for h in range(length)]
-    
-                    rev_.extend(rev_a)
-                    dates_.extend(dates_a)
-                    raw_r.extend(raw_r_a)
-                    aspects_.extend(aspects_a)
-                    description_.extend(descrip_a)
-    
-                # if a review doesn't contain any aspect then we add "neutral" for both the aspect & description column
-    
-                else:
-                    rev_.append(data["Review"].values[i])
-                    dates_.append(data["Date"].values[i])
-                    raw_r.append(data["Raw_Review"].values[i])
-                    aspects_.append('neutral')
-                    description_.append('neutral')
-    
-            data_ = pd.DataFrame(
-                {"Date": dates_, "Review": rev_, "Aspect": aspects_, "Description": description_, "Raw_Review": raw_r})
-            return data_
-        except Exception as e:
-            st.error(f"An error occurred in 'add_data' function: {str(e)}")
+        rev_ = []  # list containing reviews
+        dates_ = []  # list containing dates
+        aspects_ = []  # list containing aspects
+        description_ = []  # list containing description
+        raw_r = []
+
+        for i, j in enumerate(aspect_list):
+            length = len(list(j.values())[0])
+            if len(list(j.values())[0]) != 0:
+                rev_a = [data["Review"].values[i] for k in range(len(list(j.values())[0]))]
+                dates_a = [data["Date"].values[i] for k in range(len(list(j.values())[0]))]
+                raw_r_a = [data["Raw_Review"].values[i] for k in range(len(list(j.values())[0]))]
+                aspects_a = [list(j.values())[0][h]["noun"] for h in range(length)]
+                descrip_a = [list(j.values())[0][h]["adj"] for h in range(length)]
+
+                rev_.extend(rev_a)
+                dates_.extend(dates_a)
+                raw_r.extend(raw_r_a)
+                aspects_.extend(aspects_a)
+                description_.extend(descrip_a)
+
+            # if a review doesn't contain any aspect then we add "neutral" for both the aspect & description column
+
+            else:
+                rev_.append(data["Review"].values[i])
+                dates_.append(data["Date"].values[i])
+                raw_r.append(data["Raw_Review"].values[i])
+                aspects_.append('neutral')
+                description_.append('neutral')
+
+        data_ = pd.DataFrame(
+            {"Date": dates_, "Review": rev_, "Aspect": aspects_, "Description": description_, "Raw_Review": raw_r})
+        return data_
 
     df2 = add_data(df1,aspect_list_train)
 
 ### 8. Sentiments
 
     def sentiment_scores(sentence):
-        try:
-            senti = SentimentIntensityAnalyzer()
-            sentiment_dict = senti.polarity_scores(sentence)  # this line returns the polarity for sentence
-    
-            if sentiment_dict['compound'] >= 0.05:  # if the compound score is >= 0.05 then the review is positive
-                return ("Positive"), sentiment_dict['pos'], sentiment_dict['compound']
-    
-            elif sentiment_dict['compound'] <= - 0.05:  # if the compound score is <= -0.05 then the review is negative
-                return ("Negative"), sentiment_dict['neg'], sentiment_dict['compound']
-    
-            else:
-                return ("Neutral"), sentiment_dict['neu'], sentiment_dict[
-                    'compound']  # if compound score is in between 0.05 and -0.05 then the review is neutral
-        except Exception as e:
-            st.error(f"An error occurred in 'sentiment_scores' function: {str(e)}")
+        senti = SentimentIntensityAnalyzer()
+        sentiment_dict = senti.polarity_scores(sentence)  # this line returns the polarity for sentence
+
+        if sentiment_dict['compound'] >= 0.05:  # if the compound score is >= 0.05 then the review is positive
+            return ("Positive"), sentiment_dict['pos'], sentiment_dict['compound']
+
+        elif sentiment_dict['compound'] <= - 0.05:  # if the compound score is <= -0.05 then the review is negative
+            return ("Negative"), sentiment_dict['neg'], sentiment_dict['compound']
+
+        else:
+            return ("Neutral"), sentiment_dict['neu'], sentiment_dict[
+                'compound']  # if compound score is in between 0.05 and -0.05 then the review is neutral
 
 ### 9. Final frame:
     #global final_df
     def date_df(data):
-        try:
-            sentiment_ = []  # this list carries the sentiment for the review
-            compound = []  # this consists of score based on which the sentiments are defined
-    
-            for u in data["Review"].values:  # applying the above defined function by iterating through each review
-                a, b, c = sentiment_scores(u)
-                sentiment_.append(a)
-                compound.append(c)
-    
-            data["Sentiment"] = sentiment_  # adding the sentiment to dataframe
-            data["Score"] = compound  # adding the score to dataframe
-            data["Date"] = pd.to_datetime(data['Date'])
-            data.sort_values(by='Date', inplace=True)  # sorting the date in ascending order
-    
-            data["Year"] = pd.DatetimeIndex(data['Date']).year  # extracting year from date
-            data["Month"] = pd.DatetimeIndex(data['Date']).month  # extracting month from date
-            #data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
-    
-            dfinal_ = data.reset_index().drop(["index"], axis=1)  # resetting the index
-            print("final df shape:{}".format(dfinal_.shape))
-            return dfinal_
-        except Exception as e:
-            st.error(f"An error occurred in 'date_df' function: {str(e)}")
+        sentiment_ = []  # this list carries the sentiment for the review
+        compound = []  # this consists of score based on which the sentiments are defined
+
+        for u in data["Review"].values:  # applying the above defined function by iterating through each review
+            a, b, c = sentiment_scores(u)
+            sentiment_.append(a)
+            compound.append(c)
+
+        data["Sentiment"] = sentiment_  # adding the sentiment to dataframe
+        data["Score"] = compound  # adding the score to dataframe
+        data["Date"] = pd.to_datetime(data['Date'])
+        data.sort_values(by='Date', inplace=True)  # sorting the date in ascending order
+
+        data["Year"] = pd.DatetimeIndex(data['Date']).year  # extracting year from date
+        data["Month"] = pd.DatetimeIndex(data['Date']).month  # extracting month from date
+        #data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
+
+        dfinal_ = data.reset_index().drop(["index"], axis=1)  # resetting the index
+        return dfinal_
 
     return date_df(df2)
 
@@ -582,13 +555,9 @@ try:
     ### 10. Aspect:
     top = st.session_state.dfinal["Aspect"].value_counts()[1:15]
     asp = list(dict(top).keys())
-    print('top: {}'.format(top))
-    print('asp: {}'.format(asp))
 
     def streamlit_menu():
         with st.sidebar:
-            print(f"Options: {asp}")  # Add this line for debugging
-            print(f"Default Index: {0}") 
             selected = option_menu(
                 menu_title="Aspects",  # required
                 options= asp,  # required
