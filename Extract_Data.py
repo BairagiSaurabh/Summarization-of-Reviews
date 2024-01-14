@@ -582,8 +582,8 @@ try:
     ### 10. Aspect:
     top = st.session_state.dfinal["Aspect"].value_counts()[1:15]
     asp = list(dict(top).keys())
-    print('top':top)
-    print('asp':asp)
+    print('top: {}'.format(top))
+    print('asp: {}'.format(asp))
 
     def streamlit_menu():
         with st.sidebar:
