@@ -67,7 +67,7 @@ def main_file(webpage, page_number, pages_to_extract):
             
             df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
             df_amazon.dropna(inplace = True)
-            
+            print("scrapped df shape:{}".format(df_amazon.shape))
             return df_amazon
     except Exception as e:
         st.error(f"An error occurred in 'main_file' function: {str(e)}")   
@@ -559,6 +559,7 @@ def main_file(webpage, page_number, pages_to_extract):
             #data["Week"] = pd.DatetimeIndex(data['Date']).week  # extracting week from date
     
             dfinal_ = data.reset_index().drop(["index"], axis=1)  # resetting the index
+            print("final df shape:{}".format(dfinal_.shape))
             return dfinal_
         except Exception as e:
             st.error(f"An error occurred in 'date_df' function: {str(e)}")
@@ -581,9 +582,13 @@ try:
     ### 10. Aspect:
     top = st.session_state.dfinal["Aspect"].value_counts()[1:15]
     asp = list(dict(top).keys())
+    print('top':top)
+    print('asp':asp)
 
     def streamlit_menu():
         with st.sidebar:
+            print(f"Options: {asp}")  # Add this line for debugging
+            print(f"Default Index: {0}") 
             selected = option_menu(
                 menu_title="Aspects",  # required
                 options= asp,  # required
