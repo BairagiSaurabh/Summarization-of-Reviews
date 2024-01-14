@@ -464,7 +464,7 @@ def main_file(webpage, page_number, pages_to_extract):
                                         axis=1)  # going through all the rows in the dataframe
             return aspect_list
         except Exception as e:
-            st.error(f"An error occurred in 'main_file' function: {str(e)}")
+            st.error(f"An error occurred in 'extract_aspects' function: {str(e)}")
 
     nlp = spacy.load("en_core_web_sm")
     reviews_train = df1[["Review"]]
