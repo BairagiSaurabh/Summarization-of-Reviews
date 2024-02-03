@@ -16,10 +16,6 @@ https://saurabh-bairagi.medium.com/summarizing-product-reviews-into-dashboard-ff
 
 ## Demo
 
-**Copy the URL from Amazon e-commerce website and ensure to get the page number at the end like below.**
-
-![url](url.PNG)
-
 **Paste the URL in the below model and enter the starting page number (i:e 1) and also 
 the number of pages you want to surf through the reviews and hit "Get Summary".**
 
