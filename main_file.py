@@ -54,16 +54,19 @@ def main_file(webpage, page_number, pages_to_extract):
         def scrape_data_amazon(webpage, page_number, pages_to_extract):
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-
-            if '&page=' in webpage:
-                webpage = webpage
-            else:
-                webpage = webpage + '&page='
-            next_page = webpage + str(page_number)
-            response = requests.get(str(next_page)) # headers=headers
+            try:
+                if '&page=' in webpage:
+                    webpage = webpage
+                else:
+                    webpage = webpage + '&page='
+                next_page = webpage + str(page_number)
+                response = requests.get(str(next_page)) # headers=headers
                                 
-            st.success(response)
-            soup = BeautifulSoup(response.content, "html.parser")
+                #print(response)
+                soup = BeautifulSoup(response.content, "html.parser")
+
+            except Exception as e:
+                st.error(e)
             # print(soup)
             soup_review = soup.findAll("div", {"class": "t-ZTKy"})
             # soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
