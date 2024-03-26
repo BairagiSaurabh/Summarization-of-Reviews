@@ -62,7 +62,7 @@ def main_file(webpage, page_number, pages_to_extract):
             next_page = webpage + str(page_number)
             response = requests.get(str(next_page)) # headers=headers
                                 
-            #print(response)
+            st.success(response)
             soup = BeautifulSoup(response.content, "html.parser")
             # print(soup)
             soup_review = soup.findAll("div", {"class": "t-ZTKy"})
