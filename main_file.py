@@ -103,6 +103,7 @@ def main_file(webpage, page_number, pages_to_extract):
         df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
         df_amazon.dropna(inplace=True)
 
+        st.success(f"Scrapped len : {len(df_amazon)}")
         print(f"Scrapped Reviews : {len(df_amazon)}")
         return df_amazon
 
