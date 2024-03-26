@@ -587,6 +587,8 @@ try:
 
     if st.button("Get Summary"):
         dfinal = main_file(str(url), int(page), int(extract))
+        st.write(len(dfinal))
+        st.table(dfinal.head(10))
         st.session_state.dfinal = dfinal
         # st.dataframe(st.session_state.dfinal)
 
