@@ -49,28 +49,26 @@ def main_file(webpage, page_number, pages_to_extract):
         webpage = webpage[:-1]
         amazon_review = []
         amazon_date = []
-        amazon_summary = []
 
         def scrape_data_amazon(webpage, page_number, pages_to_extract):
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-            try:
-                if '&page=' in webpage:
-                    webpage = webpage
-                else:
-                    webpage = webpage + '&page='
-                next_page = webpage + str(page_number)
-                response = requests.get(str(next_page)) # headers=headers
+            head = {
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+}
+            if '&page=' in webpage:
+                webpage = webpage
+            else:
+                webpage = webpage + '&page='
+            next_page = webpage + str(page_number)
+            response = requests.get(str(next_page),headers=head) # headers=headers
                                 
-                st.success(response)
-                soup = BeautifulSoup(response.content, "html.parser")
-
-            except Exception as e:
-                st.error(e)
+            #st.success(response)
+            soup = BeautifulSoup(response.content, "html.parser")
             # print(soup)
-            soup_review = soup.findAll("div", {"class": "t-ZTKy"})
+            soup_review = soup.findAll("div", {"class": "ZmyHeo"})
             # soup_summary = soup.findAll("a",{"class":"a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold"})
-            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class') == ['_2sc7ZR'])  # 10 reviews
+            soup_date = soup.find_all(lambda tag: tag.name == 'p' and tag.get('class') == ['_2NsDsF'])  # 10 reviews
             # print(soup_review)
             for x in range(len(soup_review)):
                 amazon_review.append(soup_review[x].text.replace('READ MORE', '').strip())
@@ -106,8 +104,9 @@ def main_file(webpage, page_number, pages_to_extract):
         df_amazon["Date"] = [get_date_amazon(x) for x in df_amazon["Date"].values]
         df_amazon.dropna(inplace=True)
 
-        st.success(f"Scrapped len : {len(df_amazon)}")
-        print(f"Scrapped Reviews : {len(df_amazon)}")
+        #st.success(f"Scrapped len : {len(df_amazon)}")
+        #print(f"Scrapped Reviews : {len(df_amazon)}")
+
         return df_amazon
 
     # final_df = 0
@@ -591,8 +590,8 @@ try:
 
     if st.button("Get Summary"):
         dfinal = main_file(str(url), int(page), int(extract))
-        st.write(len(dfinal))
-        st.table(dfinal.head(10))
+        #st.write(len(dfinal))
+        #st.table(dfinal.head(10))
         st.session_state.dfinal = dfinal
         # st.dataframe(st.session_state.dfinal)
 
