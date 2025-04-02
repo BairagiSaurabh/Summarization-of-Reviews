@@ -84,19 +84,21 @@ def main_file(webpage, page_number, pages_to_extract):
         scrape_data_amazon(webpage, page_number, pages_to_extract)
         data_amazon = {'Date': amazon_date, 'Review': amazon_review}
         df_amazon = pd.DataFrame(data_amazon, columns=['Date', 'Review'])
+        print(len(df_amazon))
 
         def get_date_amazon(text):
             if 'months ago' in text.lower() or 'month ago' in text.lower():
-                number = int(re.search(r'\d+', text).group())
-                current_date = datetime.date.today()
-                months_ago = current_date - relativedelta(months=number)
-                formatted_result = months_ago.strftime('%B, %Y')
-                return formatted_result
+                match = re.search(r'\d+', text)
+                if match:  # Ensure there is a match
+                    number = int(match.group(0))  # Extract the first matched number
+                    current_date = datetime.date.today()
+                    months_ago = current_date - relativedelta(months=number)
+                    formatted_result = months_ago.strftime('%B, %Y')
+                    return formatted_result
 
             elif 'days ago' in text.lower() or 'day ago' in text.lower() or 'today' in text.lower():
                 res = datetime.date.today()
                 return res.strftime('%B, %Y')
-
 
             else:
                 return text
@@ -483,7 +485,7 @@ def main_file(webpage, page_number, pages_to_extract):
         with key = Aspect & value = Description
 
         """
-        print("Entering Apply function!")
+        # print("Entering Apply function!")
         aspect_list = reviews.apply(lambda row: apply_extraction(row, nlp),
                                     axis=1)  # going through all the rows in the dataframe
         return aspect_list
